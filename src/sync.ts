@@ -1,5 +1,6 @@
 import * as crypto from "crypto";
 import * as mongodb from "mongodb";
+import { ReplaceOneModel } from "mongodb";
 import * as fs from "fs";
 
 import connectDB from "./dbConnection";
@@ -27,7 +28,7 @@ async function fullSync(): Promise<void> {
     anonymiseCustomer(customer as Customer)
   );
   const bulkOperations = anonymisedCustomers.map((anonymisedCustomer) =>
-    getReplaceObject(anonymisedCustomer)
+    parseReplaceBulkOperation(anonymisedCustomer)
   );
 
   await bulkWriteToAnonymised(bulkOperations);
@@ -36,7 +37,9 @@ async function fullSync(): Promise<void> {
 async function realtimeSync(): Promise<void> {
   let resumeToken: mongodb.ResumeToken | undefined;
   let timerId: NodeJS.Timeout | undefined;
-  let bulkOperations: mongodb.AnyBulkWriteOperation<any>[] = [];
+  let bulkOperations: mongodb.AnyBulkWriteOperation<{
+    replaceOne: ReplaceOneModel<mongodb.Document>;
+  }>[] = [];
 
   createResumeTokenStorageFile();
 
@@ -52,7 +55,7 @@ async function realtimeSync(): Promise<void> {
       const accumulationTime = 1000;
       const accumulationDocumentCount = 1000;
 
-      bulkOperations.push(getReplaceObject(anonymisedCustomer));
+      bulkOperations.push(parseReplaceBulkOperation(anonymisedCustomer));
 
       if (!timerId) {
         timerId = setTimeout(() => {
@@ -87,7 +90,7 @@ async function bulkWriteToAnonymised(
   }
 }
 
-function saveResumeToken(lastSyncTime: mongodb.ResumeToken) {
+function saveResumeToken(lastSyncTime: mongodb.ResumeToken): void {
   const state = { lastSyncTime };
   fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(state));
 }
@@ -101,7 +104,7 @@ function getResumeToken(): mongodb.ResumeToken | null {
   }
 }
 
-function anonymiseString(inputString: string) {
+function anonymiseString(inputString: string): string {
   const hash = crypto.createHash("sha256");
   const hexHash = hash.update(inputString).digest("base64");
 
@@ -126,7 +129,7 @@ function anonymiseCustomer(customer: Customer): mongodb.Document {
   };
 }
 
-function getReplaceObject(
+function parseReplaceBulkOperation(
   document: mongodb.Document
 ): mongodb.AnyBulkWriteOperation<any> {
   return {

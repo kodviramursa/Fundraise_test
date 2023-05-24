@@ -6,7 +6,7 @@ import connectDB from "./dbConnection";
 
 const CREATION_INTERVAL = 200;
 
-async function createCustomers() {
+async function createCustomers(): Promise<void> {
   await connectDB();
 
   await customerModel.insertMany(
