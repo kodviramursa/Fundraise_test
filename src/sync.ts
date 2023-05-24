@@ -31,20 +31,12 @@ async function fullSync(): Promise<void> {
   );
 
   await bulkWriteToAnonymised(bulkOperations);
-  // await customerModel.deleteMany();
-  // await anonymisedCustomerModel.deleteMany();
-  console.log(await customerModel.find().count());
-  console.log(await anonymisedCustomerModel.find().count());
 }
 
 async function realtimeSync(): Promise<void> {
   let resumeToken: mongodb.ResumeToken | undefined;
   let timerId: NodeJS.Timeout | undefined;
   let bulkOperations: mongodb.AnyBulkWriteOperation<any>[] = [];
-  // await customerModel.deleteMany();
-  // await anonymisedCustomerModel.deleteMany();
-  console.log(await customerModel.find().count());
-  console.log(await anonymisedCustomerModel.find().count());
 
   createResumeTokenStorageFile();
 
@@ -56,7 +48,6 @@ async function realtimeSync(): Promise<void> {
     if (next.operationType === "insert") {
       resumeToken = next._id;
       const customer = next.fullDocument;
-      console.log(customer.firstName);
       const anonymisedCustomer = anonymiseCustomer(customer);
       const accumulationTime = 1000;
       const accumulationDocumentCount = 1000;

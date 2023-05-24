@@ -35,7 +35,6 @@ function getCustomers(): Customer[] {
       },
       createdAt: new Date(),
     };
-    console.log(customer.firstName);
     customers.push(customer);
   }
 

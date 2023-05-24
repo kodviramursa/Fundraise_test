@@ -21,3 +21,6 @@ node_modules
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/*
+
+# Resume token
+resumeToken.json

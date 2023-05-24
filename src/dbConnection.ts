@@ -11,7 +11,7 @@ const connectDB = async (): Promise<void> => {
 
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(
-        (process.env.DB_URI ?? "") + "/dbName",
+        (process.env.DB_URI ?? "") + "/" + (process.env.DB_NAME ?? ""),
         connectionOptions
       );
 
