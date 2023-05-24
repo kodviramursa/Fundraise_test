@@ -7,7 +7,7 @@ import { Customer } from "./types";
 import { anonymisedCustomerModel, customerModel } from "./schema";
 
 const FULL_SYNC_FLAG = "--full-reindex";
-const STATE_FILE_PATH = "./resumeToken.json";
+const STATE_FILE_PATH = "resumeToken.json";
 const [, , ...args] = process.argv;
 const isFullSyncMode = args.includes(FULL_SYNC_FLAG);
 
@@ -45,6 +45,9 @@ async function realtimeSync(): Promise<void> {
   // await anonymisedCustomerModel.deleteMany();
   console.log(await customerModel.find().count());
   console.log(await anonymisedCustomerModel.find().count());
+
+  createResumeTokenStorageFile();
+
   const changeStream = await customerModel.watch([], {
     resumeAfter: getResumeToken(),
   });
@@ -53,6 +56,7 @@ async function realtimeSync(): Promise<void> {
     if (next.operationType === "insert") {
       resumeToken = next._id;
       const customer = next.fullDocument;
+      console.log(customer.firstName);
       const anonymisedCustomer = anonymiseCustomer(customer);
       const accumulationTime = 1000;
       const accumulationDocumentCount = 1000;
@@ -141,4 +145,13 @@ function getReplaceObject(
       upsert: true,
     },
   };
+}
+
+function createResumeTokenStorageFile(): void {
+  if (!fs.existsSync(STATE_FILE_PATH)) {
+    fs.appendFile(STATE_FILE_PATH, "", function (err) {
+      if (err) throw err;
+      console.log("Resume token file storage created");
+    });
+  }
 }
